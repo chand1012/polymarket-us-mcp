@@ -1,0 +1,3295 @@
+[
+  {
+    "name": "get_a_bucketed_ohlc_price_series_for_one_or_more_assets",
+    "description": "Returns a dense, ascending OHLC candle series per requested asset between from and to, one candle per bucket. Buckets with no ticks are gap-filled: close is carried forward, open/high/low equal that close, and tick_count is 0. The server clamps rather than rejects: a to of 0 or in the future becomes now, and from is raised so the series holds at most 3600 candles. That count is the only size limit, so the widest window scales with the bucket: an hour at 1S, 60 hours at 1M, 150 days at 1H. The effective bounds are echoed on each series. Duplicate assets are deduped; the response holds one series per distinct asset. Match a series to a requested asset by its asset field, never by position: the order is not guaranteed, and the REST surface returns the series sorted by symbol because a repeated query parameter does not keep its order. An unknown symbol, or an asset whose markets are not available yet, fails the whole request with 404 (asset price history is not available). An available asset with no prices yet returns an empty series; an unknown class is rejected.",
+    "method": "GET",
+    "path": "/v1/asset-prices/history",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "assets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Assets in canonical <class>:<symbol> form (gateway.types.v1.AssetId), e.g. crypto:btc, commodity:gold or commodity:silver. Repeat the query parameter to request multiple, e.g. ?assets=crypto:btc&assets=commodity:gold. At most 10; duplicates are deduped server-side."
+            },
+            "from": {
+              "type": "string",
+              "format": "int64",
+              "description": "Unix-seconds start of the window. Required. Aligned down to the bucket, and raised when the window would exceed 3600 candles; the effective start is echoed in AssetPriceSeries.from."
+            },
+            "to": {
+              "type": "string",
+              "format": "int64",
+              "description": "Unix-seconds end of the window. 0 or a future value means now. The in-progress bucket is included. A past value is aligned up to 10 s for sub-minute buckets, or to one bucket otherwise; the effective end is echoed in AssetPriceSeries.to."
+            },
+            "bucket": {
+              "type": "string",
+              "enum": [
+                "ASSET_PRICE_BUCKET_1S",
+                "ASSET_PRICE_BUCKET_5S",
+                "ASSET_PRICE_BUCKET_15S",
+                "ASSET_PRICE_BUCKET_1M",
+                "ASSET_PRICE_BUCKET_5M",
+                "ASSET_PRICE_BUCKET_15M",
+                "ASSET_PRICE_BUCKET_1H",
+                "ASSET_PRICE_BUCKET_1D"
+              ],
+              "description": "Candle width. Required; ASSET_PRICE_BUCKET_UNSPECIFIED is rejected."
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_events",
+    "description": "Retrieve all events",
+    "method": "GET",
+    "path": "/v1/events",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Maximum number of events to return"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Number of events to skip for pagination"
+            },
+            "orderBy": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Fields to order results by"
+            },
+            "orderDirection": {
+              "type": "string",
+              "description": "Order direction (asc or desc)"
+            },
+            "id": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Filter by event IDs"
+            },
+            "slug": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by event slugs"
+            },
+            "archived": {
+              "type": "boolean",
+              "description": "Filter by archived status"
+            },
+            "active": {
+              "type": "boolean",
+              "description": "Filter by active status"
+            },
+            "closed": {
+              "type": "boolean",
+              "description": "Filter by closed status"
+            },
+            "liquidityMin": {
+              "type": "number",
+              "format": "double",
+              "description": "Minimum liquidity filter"
+            },
+            "liquidityMax": {
+              "type": "number",
+              "format": "double",
+              "description": "Maximum liquidity filter"
+            },
+            "volumeMin": {
+              "type": "number",
+              "format": "double",
+              "description": "Minimum volume filter"
+            },
+            "volumeMax": {
+              "type": "number",
+              "format": "double",
+              "description": "Maximum volume filter"
+            },
+            "startDateMin": {
+              "type": "string",
+              "description": "Minimum start date filter"
+            },
+            "startDateMax": {
+              "type": "string",
+              "description": "Maximum start date filter"
+            },
+            "endDateMin": {
+              "type": "string",
+              "description": "Minimum end date filter"
+            },
+            "endDateMax": {
+              "type": "string",
+              "description": "Maximum end date filter"
+            },
+            "relatedTags": {
+              "type": "boolean",
+              "description": "Include related tags"
+            },
+            "tagSlug": {
+              "type": "string",
+              "description": "Filter by tag slug"
+            },
+            "userId": {
+              "type": "string",
+              "description": "Filter by user ID"
+            },
+            "featured": {
+              "type": "boolean",
+              "description": "Filter by featured status"
+            },
+            "seriesId": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Filter by series IDs"
+            },
+            "eventDate": {
+              "type": "string",
+              "description": "Filter by event date"
+            },
+            "startTimeMin": {
+              "type": "string",
+              "description": "Minimum start time filter"
+            },
+            "startTimeMax": {
+              "type": "string",
+              "description": "Maximum start time filter"
+            },
+            "excludeTagId": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Tag IDs to exclude"
+            },
+            "featuredOrder": {
+              "type": "boolean",
+              "description": "Order by featured position"
+            },
+            "includeTemplate": {
+              "type": "boolean",
+              "description": "Include template events"
+            },
+            "recurrence": {
+              "type": "string",
+              "description": "Filter by recurrence type"
+            },
+            "gameId": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Filter by game ID"
+            },
+            "rescheduledFromGameId": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Filter by rescheduled from game ID"
+            },
+            "period": {
+              "type": "string",
+              "description": "Filter by event period"
+            },
+            "finishedTimestampMin": {
+              "type": "string",
+              "description": "Minimum finished timestamp filter"
+            },
+            "finishedTimestampMax": {
+              "type": "string",
+              "description": "Maximum finished timestamp filter"
+            },
+            "ended": {
+              "type": "boolean",
+              "description": "Filter by ended status"
+            },
+            "sportradarGameId": {
+              "type": "string",
+              "description": "Filter by Sportradar game ID"
+            },
+            "excludeSeriesId": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Series IDs to exclude"
+            },
+            "categories": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by categories"
+            },
+            "marketTypes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by market types"
+            },
+            "live": {
+              "type": "boolean",
+              "description": "Filter by live status"
+            },
+            "excludeEventId": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Event IDs to exclude"
+            },
+            "includeHidden": {
+              "type": "boolean",
+              "description": "Include hidden events (default: false)"
+            },
+            "tagIds": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Filter by tag IDs"
+            },
+            "sportsMarketTypes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by fine-grained sports_market_type (e.g. moneyline, drawable_outcome, soccer_game_to_advance)"
+            },
+            "includeComboMarketCounts": {
+              "type": "boolean",
+              "description": "Include derived event-level combo market counts"
+            },
+            "teamId": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Filter to events the team participates in"
+            },
+            "tagSlugsAll": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Events must carry every one of these tag slugs (AND). Contrast tag_slug (single) and tag_ids (OR)"
+            },
+            "includePopularPlayerProps": {
+              "type": "boolean",
+              "description": "Include the synthetic Popular section in Player Props market groups"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_event_by_slug",
+    "description": "Retrieve an event by its slug",
+    "method": "GET",
+    "path": "/v1/events/slug/{slug}",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Event slug"
+        },
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "groups": {
+              "type": "boolean",
+              "description": "Include structured market groups in the response"
+            },
+            "comboEnabledOnly": {
+              "type": "boolean",
+              "description": "When true, return only combo-enabled markets for the event"
+            },
+            "includePopularPlayerProps": {
+              "type": "boolean",
+              "description": "Include the synthetic Popular section in Player Props market groups"
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "get_event_by_id",
+    "description": "Retrieve a specific event by its ID",
+    "method": "GET",
+    "path": "/v1/events/{id}",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Event ID"
+        },
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "groups": {
+              "type": "boolean",
+              "description": "Include structured market groups in the response"
+            },
+            "comboEnabledOnly": {
+              "type": "boolean",
+              "description": "When true, return only combo-enabled markets for the event"
+            },
+            "includePopularPlayerProps": {
+              "type": "boolean",
+              "description": "Include the synthetic Popular section in Player Props market groups"
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ]
+    }
+  },
+  {
+    "name": "get_event_by_partner_external_id",
+    "description": "Resolve a partner external event ID (e.g. OpticOdds fixture ID) to the internal event and its mapped market sides",
+    "method": "GET",
+    "path": "/v1/partners/{partnerKey}/events/{externalId}",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "partnerKey": {
+          "type": "string",
+          "description": "Partner slug (e.g. opticodds)"
+        },
+        "externalId": {
+          "type": "string",
+          "description": "Partner external event ID (e.g. OpticOdds fixture ID)"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "partnerKey",
+        "externalId"
+      ]
+    }
+  },
+  {
+    "name": "get_incentive_programs",
+    "description": "Returns active and historical incentive programs grouped by market.",
+    "method": "GET",
+    "path": "/v1/incentives",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "page_size": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Number of markets to return per page. Use with `page_token` for pagination."
+            },
+            "page_token": {
+              "type": "string",
+              "description": "Pagination token from a previous response's `next_page_token` field. Omit for the first request."
+            },
+            "symbols": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by market symbols. Returns only programs for the specified markets."
+            },
+            "order_by": {
+              "type": "string",
+              "description": "Sort field. Defaults to `created_at`."
+            },
+            "order_direction": {
+              "type": "string",
+              "description": "Sort direction: `asc` or `desc`. Defaults to `desc`."
+            },
+            "statuses": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by program status: `active`, `closed`, or `pending`."
+            },
+            "program_type": {
+              "type": "string",
+              "description": "Filter by program type, such as `liquidityProgram` or `volumeProgram`."
+            },
+            "query": {
+              "type": "string",
+              "description": "Case-insensitive substring match on market slug."
+            },
+            "instrument_states": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "INSTRUMENT_STATE_OPEN",
+                  "INSTRUMENT_STATE_PREOPEN",
+                  "INSTRUMENT_STATE_SUSPENDED",
+                  "INSTRUMENT_STATE_EXPIRED",
+                  "INSTRUMENT_STATE_TERMINATED",
+                  "INSTRUMENT_STATE_HALTED",
+                  "INSTRUMENT_STATE_MATCH_AND_CLOSE_AUCTION",
+                  "INSTRUMENT_STATE_PENDING"
+                ]
+              },
+              "description": "Filter by instrument lifecycle state, including `INSTRUMENT_STATE_CLOSED`."
+            },
+            "category": {
+              "type": "string",
+              "description": "Filter by exact event category."
+            },
+            "subcategory": {
+              "type": "string",
+              "description": "Filter by exact event subcategory."
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_your_incentive_earnings",
+    "description": "Returns rewards earned by the authenticated caller. Each entry sums all payouts for a single (market, date) pair, where date is in Eastern Time.",
+    "method": "GET",
+    "path": "/v1/incentives/earnings",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "start_date": {
+              "type": "string",
+              "description": "Start date filter (`YYYY-MM-DD`). Defaults to the program launch date."
+            },
+            "end_date": {
+              "type": "string",
+              "description": "End date filter (`YYYY-MM-DD`). Omit for through-today."
+            },
+            "market_slug": {
+              "type": "string",
+              "description": "Filter by market slug."
+            },
+            "program_type": {
+              "type": "string",
+              "description": "Filter by program type (e.g. `liquidityProgram`)."
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_market_by_id",
+    "description": "Retrieve a specific market by its ID",
+    "method": "GET",
+    "path": "/v1/market/id/{id}",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Market ID"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ]
+    }
+  },
+  {
+    "name": "get_market_by_slug",
+    "description": "Retrieve a specific market by its slug",
+    "method": "GET",
+    "path": "/v1/market/slug/{slug}",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Market slug"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "get_markets",
+    "description": "Retrieve all markets",
+    "method": "GET",
+    "path": "/v1/markets",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Page size"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Page offset"
+            },
+            "orderBy": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Order by fields"
+            },
+            "orderDirection": {
+              "type": "string",
+              "description": "Order direction"
+            },
+            "id": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Market IDs"
+            },
+            "slug": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Market slugs"
+            },
+            "archived": {
+              "type": "boolean",
+              "description": "Whether market is archived"
+            },
+            "active": {
+              "type": "boolean",
+              "description": "Whether market is active"
+            },
+            "closed": {
+              "type": "boolean",
+              "description": "Whether market is closed"
+            },
+            "volumeNumMin": {
+              "type": "number",
+              "format": "double",
+              "description": "Minimum volume number"
+            },
+            "volumeNumMax": {
+              "type": "number",
+              "format": "double",
+              "description": "Maximum volume number"
+            },
+            "startDateMin": {
+              "type": "string",
+              "description": "Minimum start date"
+            },
+            "startDateMax": {
+              "type": "string",
+              "description": "Maximum start date"
+            },
+            "endDateMin": {
+              "type": "string",
+              "description": "Minimum end date"
+            },
+            "endDateMax": {
+              "type": "string",
+              "description": "Maximum end date"
+            },
+            "relatedTags": {
+              "type": "boolean",
+              "description": "Whether related tags are enabled"
+            },
+            "gameId": {
+              "type": "string",
+              "description": "Game ID"
+            },
+            "sportsMarketTypes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "SPORTS_MARKET_TYPE_MONEYLINE",
+                  "SPORTS_MARKET_TYPE_SPREAD",
+                  "SPORTS_MARKET_TYPE_TOTAL",
+                  "SPORTS_MARKET_TYPE_PROP",
+                  "SPORTS_MARKET_TYPE_FUTURE",
+                  "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME"
+                ]
+              },
+              "description": "Sports market types"
+            },
+            "includeTag": {
+              "type": "boolean",
+              "description": "Whether to include tag"
+            },
+            "categories": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Categories"
+            },
+            "marketTypes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Market types"
+            },
+            "includeHidden": {
+              "type": "boolean",
+              "description": "Include hidden markets (default: false)"
+            },
+            "tagIds": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Tag IDs"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_market_bbo",
+    "description": "Retrieve current market data (best bid/offer, stats) for a specific market by its slug in a lightweight format",
+    "method": "GET",
+    "path": "/v1/markets/{slug}/bbo",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Market slug"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "get_market_book",
+    "description": "Retrieve current market data (order book, stats) for a specific market by its slug",
+    "method": "GET",
+    "path": "/v1/markets/{slug}/book",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Market slug"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "get_market_settlement",
+    "description": "Retrieve the settlement price for a specific market by its slug",
+    "method": "GET",
+    "path": "/v1/markets/{slug}/settlement",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Market slug"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "create_order",
+    "description": "LIVE ACCOUNT ACTION: Create a new order to enter into a market This operation may affect real funds or account state.",
+    "method": "POST",
+    "path": "/v1/orders",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/CreateOrderRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "$defs": {
+        "CreateOrderRequest": {
+          "type": "object",
+          "required": [
+            "marketSlug"
+          ],
+          "properties": {
+            "marketSlug": {
+              "type": "string",
+              "description": "Unique market slug into which the order should be entered"
+            },
+            "type": {
+              "$ref": "#/$defs/OrderType",
+              "description": "Type of order (limit or market)"
+            },
+            "price": {
+              "$ref": "#/$defs/Amount",
+              "description": "Order price and currency. Required for limit orders."
+            },
+            "quantity": {
+              "type": "number",
+              "format": "double",
+              "description": "Order quantity in contracts. Supports decimal quantities on markets whose minimumTradeQty is less than 1."
+            },
+            "tif": {
+              "$ref": "#/$defs/TimeInForce",
+              "description": "Order time in force policy"
+            },
+            "participateDontInitiate": {
+              "type": "boolean",
+              "description": "If true, order must rest on the book prior to matching (maker only). Order will be rejected if it would immediately match."
+            },
+            "goodTillTime": {
+              "type": "string",
+              "description": "Expiration time for orders with TIME_IN_FORCE_GOOD_TILL_DATE"
+            },
+            "intent": {
+              "$ref": "#/$defs/OrderIntent",
+              "description": "Order intent. Either `intent` or (`outcomeSide` + `action`) must be set."
+            },
+            "outcomeSide": {
+              "$ref": "#/$defs/OutcomeSide",
+              "description": "Outcome side. Set with `action` as an alternative to `intent`. Takes priority if both are set."
+            },
+            "action": {
+              "$ref": "#/$defs/OrderAction",
+              "description": "Order action. Set with `outcomeSide` as an alternative to `intent`."
+            },
+            "cashOrderQty": {
+              "$ref": "#/$defs/Amount",
+              "description": "Order quantity in cash and currency. Used for market orders instead of share quantity."
+            },
+            "manualOrderIndicator": {
+              "$ref": "#/$defs/ManualOrderIndicator",
+              "description": "Indicates whether the order was placed manually or automatically"
+            },
+            "synchronousExecution": {
+              "type": "boolean",
+              "description": "If true, will block until the order is filled, rejected, canceled, or expired, up to maxBlockTime seconds"
+            },
+            "maxBlockTime": {
+              "type": "string",
+              "format": "int64",
+              "description": "Maximum block time in seconds if synchronous execution is requested"
+            },
+            "slippageTolerance": {
+              "$ref": "#/$defs/SlippageTolerance",
+              "description": "Slippage tolerance configuration for the order"
+            }
+          },
+          "description": "Request to create a new order."
+        },
+        "SlippageTolerance": {
+          "type": "object",
+          "properties": {
+            "currentPrice": {
+              "$ref": "#/$defs/Amount",
+              "description": "Current price of the market used as reference for slippage calculation"
+            },
+            "bips": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "description": "Slippage tolerance in basis points (1 bip = 0.01%)"
+            },
+            "ticks": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "description": "Slippage tolerance in price ticks. Takes priority over bips if both are set."
+            }
+          },
+          "description": "Slippage tolerance configuration for market orders"
+        },
+        "Amount": {
+          "type": "object",
+          "required": [
+            "value",
+            "currency"
+          ],
+          "properties": {
+            "value": {
+              "type": "string",
+              "format": "decimal",
+              "example": "0.55",
+              "description": "The amount as a decimal string"
+            },
+            "currency": {
+              "type": "string",
+              "example": "USD",
+              "description": "The currency code (e.g., 'USD')"
+            }
+          },
+          "description": "Represents a monetary amount with its currency"
+        },
+        "ManualOrderIndicator": {
+          "type": "string",
+          "enum": [
+            "MANUAL_ORDER_INDICATOR_MANUAL",
+            "MANUAL_ORDER_INDICATOR_AUTOMATIC"
+          ],
+          "description": "Indicates whether the order was placed manually by a user or automatically by a trading system"
+        },
+        "OrderAction": {
+          "type": "string",
+          "enum": [
+            "ORDER_ACTION_BUY",
+            "ORDER_ACTION_SELL"
+          ],
+          "description": "Order action (BUY or SELL)."
+        },
+        "OutcomeSide": {
+          "type": "string",
+          "enum": [
+            "OUTCOME_SIDE_YES",
+            "OUTCOME_SIDE_NO"
+          ],
+          "description": "Outcome side of the market (YES = long, NO = short)."
+        },
+        "OrderIntent": {
+          "type": "string",
+          "enum": [
+            "ORDER_INTENT_BUY_LONG",
+            "ORDER_INTENT_SELL_LONG",
+            "ORDER_INTENT_BUY_SHORT",
+            "ORDER_INTENT_SELL_SHORT"
+          ],
+          "description": "Intent of the order. `ORDER_INTENT_BUY_LONG` = Buy YES contracts, `ORDER_INTENT_SELL_LONG` = Sell YES contracts, `ORDER_INTENT_BUY_SHORT` = Buy NO contracts, `ORDER_INTENT_SELL_SHORT` = Sell NO contracts."
+        },
+        "TimeInForce": {
+          "type": "string",
+          "enum": [
+            "TIME_IN_FORCE_DAY",
+            "TIME_IN_FORCE_GOOD_TILL_CANCEL",
+            "TIME_IN_FORCE_GOOD_TILL_DATE",
+            "TIME_IN_FORCE_IMMEDIATE_OR_CANCEL",
+            "TIME_IN_FORCE_FILL_OR_KILL"
+          ],
+          "description": "Time in force policy. `TIME_IN_FORCE_DAY` expires at end of trading day. `TIME_IN_FORCE_GOOD_TILL_CANCEL` (GTC) remains active until filled or canceled. `TIME_IN_FORCE_GOOD_TILL_DATE` (GTD) expires at specified time. `TIME_IN_FORCE_IMMEDIATE_OR_CANCEL` (IOC) fills immediately or cancels remaining. `TIME_IN_FORCE_FILL_OR_KILL` (FOK) must fill entirely or cancel."
+        },
+        "OrderType": {
+          "type": "string",
+          "enum": [
+            "ORDER_TYPE_LIMIT",
+            "ORDER_TYPE_MARKET"
+          ],
+          "description": "Type of order. `ORDER_TYPE_LIMIT` requires a price, `ORDER_TYPE_MARKET` executes at best available price."
+        }
+      }
+    }
+  },
+  {
+    "name": "get_open_orders",
+    "description": "Get all open orders for the authenticated user",
+    "method": "GET",
+    "path": "/v1/orders/open",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "slugs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of market slugs to filter by. Pass multiple values to filter by multiple markets (e.g., `?slugs=market-1&slugs=market-2`)"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "cancel_all_open_orders",
+    "description": "LIVE ACCOUNT ACTION: Cancel all open orders, optionally filtered by market slugs This operation may affect real funds or account state.",
+    "method": "POST",
+    "path": "/v1/orders/open/cancel",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/CancelOpenOrdersRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "$defs": {
+        "CancelOpenOrdersRequest": {
+          "type": "object",
+          "properties": {
+            "slugs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of market slugs to filter by. If empty, cancels all open orders."
+            }
+          },
+          "description": "Request to cancel all open orders"
+        }
+      }
+    }
+  },
+  {
+    "name": "create_multiple_orders",
+    "description": "LIVE ACCOUNT ACTION: Create up to 20 orders in a single request. If any entry fails request-shape validation, the whole batch is rejected by the gateway before reaching the exchange. Per-entry exchange outcomes (accept, fill, reject) are delivered on the order stream, not in this response. `createdOrderIds` are returned in request order. This operation may affect real funds or account state.",
+    "method": "POST",
+    "path": "/v1/orders/batched",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/CreateOrderListRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "$defs": {
+        "CreateOrderListRequest": {
+          "type": "object",
+          "required": [
+            "orders"
+          ],
+          "properties": {
+            "orders": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 20,
+              "items": {
+                "$ref": "#/$defs/CreateOrderRequest"
+              },
+              "description": "Orders to create (1 to 20)."
+            }
+          },
+          "description": "Batched create-order request."
+        },
+        "CreateOrderRequest": {
+          "type": "object",
+          "required": [
+            "marketSlug"
+          ],
+          "properties": {
+            "marketSlug": {
+              "type": "string",
+              "description": "Unique market slug into which the order should be entered"
+            },
+            "type": {
+              "$ref": "#/$defs/OrderType",
+              "description": "Type of order (limit or market)"
+            },
+            "price": {
+              "$ref": "#/$defs/Amount",
+              "description": "Order price and currency. Required for limit orders."
+            },
+            "quantity": {
+              "type": "number",
+              "format": "double",
+              "description": "Order quantity in contracts. Supports decimal quantities on markets whose minimumTradeQty is less than 1."
+            },
+            "tif": {
+              "$ref": "#/$defs/TimeInForce",
+              "description": "Order time in force policy"
+            },
+            "participateDontInitiate": {
+              "type": "boolean",
+              "description": "If true, order must rest on the book prior to matching (maker only). Order will be rejected if it would immediately match."
+            },
+            "goodTillTime": {
+              "type": "string",
+              "description": "Expiration time for orders with TIME_IN_FORCE_GOOD_TILL_DATE"
+            },
+            "intent": {
+              "$ref": "#/$defs/OrderIntent",
+              "description": "Order intent. Either `intent` or (`outcomeSide` + `action`) must be set."
+            },
+            "outcomeSide": {
+              "$ref": "#/$defs/OutcomeSide",
+              "description": "Outcome side. Set with `action` as an alternative to `intent`. Takes priority if both are set."
+            },
+            "action": {
+              "$ref": "#/$defs/OrderAction",
+              "description": "Order action. Set with `outcomeSide` as an alternative to `intent`."
+            },
+            "cashOrderQty": {
+              "$ref": "#/$defs/Amount",
+              "description": "Order quantity in cash and currency. Used for market orders instead of share quantity."
+            },
+            "manualOrderIndicator": {
+              "$ref": "#/$defs/ManualOrderIndicator",
+              "description": "Indicates whether the order was placed manually or automatically"
+            },
+            "synchronousExecution": {
+              "type": "boolean",
+              "description": "If true, will block until the order is filled, rejected, canceled, or expired, up to maxBlockTime seconds"
+            },
+            "maxBlockTime": {
+              "type": "string",
+              "format": "int64",
+              "description": "Maximum block time in seconds if synchronous execution is requested"
+            },
+            "slippageTolerance": {
+              "$ref": "#/$defs/SlippageTolerance",
+              "description": "Slippage tolerance configuration for the order"
+            }
+          },
+          "description": "Request to create a new order."
+        },
+        "SlippageTolerance": {
+          "type": "object",
+          "properties": {
+            "currentPrice": {
+              "$ref": "#/$defs/Amount",
+              "description": "Current price of the market used as reference for slippage calculation"
+            },
+            "bips": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "description": "Slippage tolerance in basis points (1 bip = 0.01%)"
+            },
+            "ticks": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "description": "Slippage tolerance in price ticks. Takes priority over bips if both are set."
+            }
+          },
+          "description": "Slippage tolerance configuration for market orders"
+        },
+        "Amount": {
+          "type": "object",
+          "required": [
+            "value",
+            "currency"
+          ],
+          "properties": {
+            "value": {
+              "type": "string",
+              "format": "decimal",
+              "example": "0.55",
+              "description": "The amount as a decimal string"
+            },
+            "currency": {
+              "type": "string",
+              "example": "USD",
+              "description": "The currency code (e.g., 'USD')"
+            }
+          },
+          "description": "Represents a monetary amount with its currency"
+        },
+        "ManualOrderIndicator": {
+          "type": "string",
+          "enum": [
+            "MANUAL_ORDER_INDICATOR_MANUAL",
+            "MANUAL_ORDER_INDICATOR_AUTOMATIC"
+          ],
+          "description": "Indicates whether the order was placed manually by a user or automatically by a trading system"
+        },
+        "OrderAction": {
+          "type": "string",
+          "enum": [
+            "ORDER_ACTION_BUY",
+            "ORDER_ACTION_SELL"
+          ],
+          "description": "Order action (BUY or SELL)."
+        },
+        "OutcomeSide": {
+          "type": "string",
+          "enum": [
+            "OUTCOME_SIDE_YES",
+            "OUTCOME_SIDE_NO"
+          ],
+          "description": "Outcome side of the market (YES = long, NO = short)."
+        },
+        "OrderIntent": {
+          "type": "string",
+          "enum": [
+            "ORDER_INTENT_BUY_LONG",
+            "ORDER_INTENT_SELL_LONG",
+            "ORDER_INTENT_BUY_SHORT",
+            "ORDER_INTENT_SELL_SHORT"
+          ],
+          "description": "Intent of the order. `ORDER_INTENT_BUY_LONG` = Buy YES contracts, `ORDER_INTENT_SELL_LONG` = Sell YES contracts, `ORDER_INTENT_BUY_SHORT` = Buy NO contracts, `ORDER_INTENT_SELL_SHORT` = Sell NO contracts."
+        },
+        "TimeInForce": {
+          "type": "string",
+          "enum": [
+            "TIME_IN_FORCE_DAY",
+            "TIME_IN_FORCE_GOOD_TILL_CANCEL",
+            "TIME_IN_FORCE_GOOD_TILL_DATE",
+            "TIME_IN_FORCE_IMMEDIATE_OR_CANCEL",
+            "TIME_IN_FORCE_FILL_OR_KILL"
+          ],
+          "description": "Time in force policy. `TIME_IN_FORCE_DAY` expires at end of trading day. `TIME_IN_FORCE_GOOD_TILL_CANCEL` (GTC) remains active until filled or canceled. `TIME_IN_FORCE_GOOD_TILL_DATE` (GTD) expires at specified time. `TIME_IN_FORCE_IMMEDIATE_OR_CANCEL` (IOC) fills immediately or cancels remaining. `TIME_IN_FORCE_FILL_OR_KILL` (FOK) must fill entirely or cancel."
+        },
+        "OrderType": {
+          "type": "string",
+          "enum": [
+            "ORDER_TYPE_LIMIT",
+            "ORDER_TYPE_MARKET"
+          ],
+          "description": "Type of order. `ORDER_TYPE_LIMIT` requires a price, `ORDER_TYPE_MARKET` executes at best available price."
+        }
+      }
+    }
+  },
+  {
+    "name": "cancel_multiple_orders",
+    "description": "LIVE ACCOUNT ACTION: Cancel up to 20 orders in a single request. If any entry fails request-shape validation, the whole batch is rejected by the gateway before reaching the exchange. The exchange may silently ignore unknown `orderId`s. `canceledOrderIds` is an echo of the request, not a confirmation; observe actual outcomes on the order stream. This operation may affect real funds or account state. Returned IDs may not confirm exchange execution; verify the outcome.",
+    "method": "POST",
+    "path": "/v1/orders/batched/cancel",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/CancelOrderListRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "$defs": {
+        "CancelOrderListRequest": {
+          "type": "object",
+          "required": [
+            "orders"
+          ],
+          "properties": {
+            "orders": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 20,
+              "items": {
+                "$ref": "#/$defs/CancelOrderRequestEntry"
+              },
+              "description": "Orders to cancel (1 to 20)."
+            }
+          },
+          "description": "Batched cancel-order request."
+        },
+        "CancelOrderRequestEntry": {
+          "type": "object",
+          "required": [
+            "orderId",
+            "marketSlug"
+          ],
+          "properties": {
+            "orderId": {
+              "type": "string",
+              "description": "Exchange-assigned order ID to cancel."
+            },
+            "marketSlug": {
+              "type": "string",
+              "description": "Market slug the order belongs to."
+            }
+          },
+          "description": "Same shape as the body of `POST /v1/order/{orderId}/cancel`, with `orderId` in the body instead of the URL path."
+        }
+      }
+    }
+  },
+  {
+    "name": "modify_multiple_orders",
+    "description": "LIVE ACCOUNT ACTION: Modify up to 20 existing orders in a single request. Each entry is forwarded to the exchange as a cancel-replace. If any entry fails request-shape validation, the whole batch is rejected by the gateway before reaching the exchange. The exchange may silently ignore unknown `orderId`s. `modifiedOrderIds` is an echo of the request, not a confirmation; observe actual outcomes on the order stream. This operation may affect real funds or account state. Returned IDs may not confirm exchange execution; verify the outcome.",
+    "method": "POST",
+    "path": "/v1/orders/batched/modify",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/ModifyOrderListRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "$defs": {
+        "ModifyOrderListRequest": {
+          "type": "object",
+          "required": [
+            "orders"
+          ],
+          "properties": {
+            "orders": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 20,
+              "items": {
+                "$ref": "#/$defs/ModifyOrderListEntry"
+              },
+              "description": "Orders to modify (1 to 20)."
+            }
+          },
+          "description": "Batched modify-order request."
+        },
+        "ModifyOrderListEntry": {
+          "type": "object",
+          "required": [
+            "orderId",
+            "marketSlug"
+          ],
+          "properties": {
+            "orderId": {
+              "type": "string",
+              "description": "Exchange-assigned order ID to modify."
+            },
+            "marketSlug": {
+              "type": "string",
+              "description": "Market slug the order belongs to."
+            },
+            "price": {
+              "$ref": "#/$defs/Amount",
+              "description": "New order price and currency"
+            },
+            "quantity": {
+              "type": "number",
+              "format": "double",
+              "description": "New order quantity in contracts. Supports decimal quantities on markets whose minimumTradeQty is less than 1."
+            },
+            "tif": {
+              "$ref": "#/$defs/TimeInForce",
+              "description": "New order time in force"
+            },
+            "participateDontInitiate": {
+              "type": "boolean",
+              "description": "Order must rest on the book prior to matching (maker only)"
+            },
+            "goodTillTime": {
+              "type": "string",
+              "description": "Good till time for orders with TIME_IN_FORCE_GOOD_TILL_DATE"
+            }
+          },
+          "description": "Same shape as the body of `POST /v1/order/{orderId}/modify`, with `orderId` in the body instead of the URL path."
+        },
+        "TimeInForce": {
+          "type": "string",
+          "enum": [
+            "TIME_IN_FORCE_DAY",
+            "TIME_IN_FORCE_GOOD_TILL_CANCEL",
+            "TIME_IN_FORCE_GOOD_TILL_DATE",
+            "TIME_IN_FORCE_IMMEDIATE_OR_CANCEL",
+            "TIME_IN_FORCE_FILL_OR_KILL"
+          ],
+          "description": "Time in force policy. `TIME_IN_FORCE_DAY` expires at end of trading day. `TIME_IN_FORCE_GOOD_TILL_CANCEL` (GTC) remains active until filled or canceled. `TIME_IN_FORCE_GOOD_TILL_DATE` (GTD) expires at specified time. `TIME_IN_FORCE_IMMEDIATE_OR_CANCEL` (IOC) fills immediately or cancels remaining. `TIME_IN_FORCE_FILL_OR_KILL` (FOK) must fill entirely or cancel."
+        },
+        "Amount": {
+          "type": "object",
+          "required": [
+            "value",
+            "currency"
+          ],
+          "properties": {
+            "value": {
+              "type": "string",
+              "format": "decimal",
+              "example": "0.55",
+              "description": "The amount as a decimal string"
+            },
+            "currency": {
+              "type": "string",
+              "example": "USD",
+              "description": "The currency code (e.g., 'USD')"
+            }
+          },
+          "description": "Represents a monetary amount with its currency"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_order",
+    "description": "Get details for a specific order by its exchange-assigned ID",
+    "method": "GET",
+    "path": "/v1/order/{orderId}",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Exchange-assigned Order ID to retrieve"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "orderId"
+      ]
+    }
+  },
+  {
+    "name": "cancel_order",
+    "description": "LIVE ACCOUNT ACTION: Cancel a specific order by its exchange-assigned ID This operation may affect real funds or account state.",
+    "method": "POST",
+    "path": "/v1/order/{orderId}/cancel",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Exchange-assigned Order ID to cancel"
+        },
+        "body": {
+          "$ref": "#/$defs/CancelOrderRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "orderId",
+        "body"
+      ],
+      "$defs": {
+        "CancelOrderRequest": {
+          "type": "object",
+          "properties": {
+            "marketSlug": {
+              "type": "string",
+              "description": "Unique market slug into which the order should be canceled"
+            }
+          },
+          "description": "Request to cancel an existing order"
+        }
+      }
+    }
+  },
+  {
+    "name": "modify_order",
+    "description": "LIVE ACCOUNT ACTION: Modify an existing order in the marketplace. Allows changing price, quantity, time in force, and other parameters. This operation may affect real funds or account state.",
+    "method": "POST",
+    "path": "/v1/order/{orderId}/modify",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Exchange-assigned Order ID to modify"
+        },
+        "body": {
+          "$ref": "#/$defs/ModifyOrderRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "orderId",
+        "body"
+      ],
+      "$defs": {
+        "ModifyOrderRequest": {
+          "type": "object",
+          "properties": {
+            "marketSlug": {
+              "type": "string",
+              "description": "Unique market slug for the order being modified"
+            },
+            "price": {
+              "$ref": "#/$defs/Amount",
+              "description": "New order price and currency"
+            },
+            "quantity": {
+              "type": "number",
+              "format": "double",
+              "description": "Order quantity in contracts. Supports decimal quantities on markets whose minimumTradeQty is less than 1."
+            },
+            "tif": {
+              "$ref": "#/$defs/TimeInForce",
+              "description": "New order time in force"
+            },
+            "participateDontInitiate": {
+              "type": "boolean",
+              "description": "Order must rest on the book prior to matching (maker only)"
+            },
+            "goodTillTime": {
+              "type": "string",
+              "description": "Good till time for orders with TIME_IN_FORCE_GOOD_TILL_DATE"
+            }
+          },
+          "description": "Request to modify an existing order"
+        },
+        "TimeInForce": {
+          "type": "string",
+          "enum": [
+            "TIME_IN_FORCE_DAY",
+            "TIME_IN_FORCE_GOOD_TILL_CANCEL",
+            "TIME_IN_FORCE_GOOD_TILL_DATE",
+            "TIME_IN_FORCE_IMMEDIATE_OR_CANCEL",
+            "TIME_IN_FORCE_FILL_OR_KILL"
+          ],
+          "description": "Time in force policy. `TIME_IN_FORCE_DAY` expires at end of trading day. `TIME_IN_FORCE_GOOD_TILL_CANCEL` (GTC) remains active until filled or canceled. `TIME_IN_FORCE_GOOD_TILL_DATE` (GTD) expires at specified time. `TIME_IN_FORCE_IMMEDIATE_OR_CANCEL` (IOC) fills immediately or cancels remaining. `TIME_IN_FORCE_FILL_OR_KILL` (FOK) must fill entirely or cancel."
+        },
+        "Amount": {
+          "type": "object",
+          "required": [
+            "value",
+            "currency"
+          ],
+          "properties": {
+            "value": {
+              "type": "string",
+              "format": "decimal",
+              "example": "0.55",
+              "description": "The amount as a decimal string"
+            },
+            "currency": {
+              "type": "string",
+              "example": "USD",
+              "description": "The currency code (e.g., 'USD')"
+            }
+          },
+          "description": "Represents a monetary amount with its currency"
+        }
+      }
+    }
+  },
+  {
+    "name": "preview_order",
+    "description": "Preview an order before submission to validate parameters and see expected fills",
+    "method": "POST",
+    "path": "/v1/order/preview",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/PreviewOrderRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "$defs": {
+        "PreviewOrderRequest": {
+          "type": "object",
+          "properties": {
+            "request": {
+              "$ref": "#/$defs/CreateOrderRequest",
+              "description": "The order to preview"
+            }
+          },
+          "description": "Request to preview an order"
+        },
+        "CreateOrderRequest": {
+          "type": "object",
+          "required": [
+            "marketSlug"
+          ],
+          "properties": {
+            "marketSlug": {
+              "type": "string",
+              "description": "Unique market slug into which the order should be entered"
+            },
+            "type": {
+              "$ref": "#/$defs/OrderType",
+              "description": "Type of order (limit or market)"
+            },
+            "price": {
+              "$ref": "#/$defs/Amount",
+              "description": "Order price and currency. Required for limit orders."
+            },
+            "quantity": {
+              "type": "number",
+              "format": "double",
+              "description": "Order quantity in contracts. Supports decimal quantities on markets whose minimumTradeQty is less than 1."
+            },
+            "tif": {
+              "$ref": "#/$defs/TimeInForce",
+              "description": "Order time in force policy"
+            },
+            "participateDontInitiate": {
+              "type": "boolean",
+              "description": "If true, order must rest on the book prior to matching (maker only). Order will be rejected if it would immediately match."
+            },
+            "goodTillTime": {
+              "type": "string",
+              "description": "Expiration time for orders with TIME_IN_FORCE_GOOD_TILL_DATE"
+            },
+            "intent": {
+              "$ref": "#/$defs/OrderIntent",
+              "description": "Order intent. Either `intent` or (`outcomeSide` + `action`) must be set."
+            },
+            "outcomeSide": {
+              "$ref": "#/$defs/OutcomeSide",
+              "description": "Outcome side. Set with `action` as an alternative to `intent`. Takes priority if both are set."
+            },
+            "action": {
+              "$ref": "#/$defs/OrderAction",
+              "description": "Order action. Set with `outcomeSide` as an alternative to `intent`."
+            },
+            "cashOrderQty": {
+              "$ref": "#/$defs/Amount",
+              "description": "Order quantity in cash and currency. Used for market orders instead of share quantity."
+            },
+            "manualOrderIndicator": {
+              "$ref": "#/$defs/ManualOrderIndicator",
+              "description": "Indicates whether the order was placed manually or automatically"
+            },
+            "synchronousExecution": {
+              "type": "boolean",
+              "description": "If true, will block until the order is filled, rejected, canceled, or expired, up to maxBlockTime seconds"
+            },
+            "maxBlockTime": {
+              "type": "string",
+              "format": "int64",
+              "description": "Maximum block time in seconds if synchronous execution is requested"
+            },
+            "slippageTolerance": {
+              "$ref": "#/$defs/SlippageTolerance",
+              "description": "Slippage tolerance configuration for the order"
+            }
+          },
+          "description": "Request to create a new order."
+        },
+        "SlippageTolerance": {
+          "type": "object",
+          "properties": {
+            "currentPrice": {
+              "$ref": "#/$defs/Amount",
+              "description": "Current price of the market used as reference for slippage calculation"
+            },
+            "bips": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "description": "Slippage tolerance in basis points (1 bip = 0.01%)"
+            },
+            "ticks": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "description": "Slippage tolerance in price ticks. Takes priority over bips if both are set."
+            }
+          },
+          "description": "Slippage tolerance configuration for market orders"
+        },
+        "Amount": {
+          "type": "object",
+          "required": [
+            "value",
+            "currency"
+          ],
+          "properties": {
+            "value": {
+              "type": "string",
+              "format": "decimal",
+              "example": "0.55",
+              "description": "The amount as a decimal string"
+            },
+            "currency": {
+              "type": "string",
+              "example": "USD",
+              "description": "The currency code (e.g., 'USD')"
+            }
+          },
+          "description": "Represents a monetary amount with its currency"
+        },
+        "ManualOrderIndicator": {
+          "type": "string",
+          "enum": [
+            "MANUAL_ORDER_INDICATOR_MANUAL",
+            "MANUAL_ORDER_INDICATOR_AUTOMATIC"
+          ],
+          "description": "Indicates whether the order was placed manually by a user or automatically by a trading system"
+        },
+        "OrderAction": {
+          "type": "string",
+          "enum": [
+            "ORDER_ACTION_BUY",
+            "ORDER_ACTION_SELL"
+          ],
+          "description": "Order action (BUY or SELL)."
+        },
+        "OutcomeSide": {
+          "type": "string",
+          "enum": [
+            "OUTCOME_SIDE_YES",
+            "OUTCOME_SIDE_NO"
+          ],
+          "description": "Outcome side of the market (YES = long, NO = short)."
+        },
+        "OrderIntent": {
+          "type": "string",
+          "enum": [
+            "ORDER_INTENT_BUY_LONG",
+            "ORDER_INTENT_SELL_LONG",
+            "ORDER_INTENT_BUY_SHORT",
+            "ORDER_INTENT_SELL_SHORT"
+          ],
+          "description": "Intent of the order. `ORDER_INTENT_BUY_LONG` = Buy YES contracts, `ORDER_INTENT_SELL_LONG` = Sell YES contracts, `ORDER_INTENT_BUY_SHORT` = Buy NO contracts, `ORDER_INTENT_SELL_SHORT` = Sell NO contracts."
+        },
+        "TimeInForce": {
+          "type": "string",
+          "enum": [
+            "TIME_IN_FORCE_DAY",
+            "TIME_IN_FORCE_GOOD_TILL_CANCEL",
+            "TIME_IN_FORCE_GOOD_TILL_DATE",
+            "TIME_IN_FORCE_IMMEDIATE_OR_CANCEL",
+            "TIME_IN_FORCE_FILL_OR_KILL"
+          ],
+          "description": "Time in force policy. `TIME_IN_FORCE_DAY` expires at end of trading day. `TIME_IN_FORCE_GOOD_TILL_CANCEL` (GTC) remains active until filled or canceled. `TIME_IN_FORCE_GOOD_TILL_DATE` (GTD) expires at specified time. `TIME_IN_FORCE_IMMEDIATE_OR_CANCEL` (IOC) fills immediately or cancels remaining. `TIME_IN_FORCE_FILL_OR_KILL` (FOK) must fill entirely or cancel."
+        },
+        "OrderType": {
+          "type": "string",
+          "enum": [
+            "ORDER_TYPE_LIMIT",
+            "ORDER_TYPE_MARKET"
+          ],
+          "description": "Type of order. `ORDER_TYPE_LIMIT` requires a price, `ORDER_TYPE_MARKET` executes at best available price."
+        }
+      }
+    }
+  },
+  {
+    "name": "close_position_order",
+    "description": "LIVE ACCOUNT ACTION: Create an order to close an existing position in a market. This will sell all contracts held in the specified market. This operation may affect real funds or account state.",
+    "method": "POST",
+    "path": "/v1/order/close-position",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/ClosePositionOrderRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "$defs": {
+        "ClosePositionOrderRequest": {
+          "type": "object",
+          "required": [
+            "marketSlug"
+          ],
+          "properties": {
+            "marketSlug": {
+              "type": "string",
+              "description": "Market slug of the position to close"
+            },
+            "manualOrderIndicator": {
+              "$ref": "#/$defs/ManualOrderIndicator",
+              "description": "Indicates whether the order was placed manually or automatically"
+            },
+            "synchronousExecution": {
+              "type": "boolean",
+              "description": "If true, will block until the order is filled, rejected, canceled, or expired, up to maxBlockTime seconds"
+            },
+            "maxBlockTime": {
+              "type": "string",
+              "format": "int64",
+              "description": "Maximum block time in seconds if synchronous execution is requested"
+            },
+            "slippageTolerance": {
+              "$ref": "#/$defs/SlippageTolerance",
+              "description": "Slippage tolerance configuration for the close order"
+            }
+          },
+          "description": "Request to create an order to close a position"
+        },
+        "SlippageTolerance": {
+          "type": "object",
+          "properties": {
+            "currentPrice": {
+              "$ref": "#/$defs/Amount",
+              "description": "Current price of the market used as reference for slippage calculation"
+            },
+            "bips": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "description": "Slippage tolerance in basis points (1 bip = 0.01%)"
+            },
+            "ticks": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true,
+              "description": "Slippage tolerance in price ticks. Takes priority over bips if both are set."
+            }
+          },
+          "description": "Slippage tolerance configuration for market orders"
+        },
+        "Amount": {
+          "type": "object",
+          "required": [
+            "value",
+            "currency"
+          ],
+          "properties": {
+            "value": {
+              "type": "string",
+              "format": "decimal",
+              "example": "0.55",
+              "description": "The amount as a decimal string"
+            },
+            "currency": {
+              "type": "string",
+              "example": "USD",
+              "description": "The currency code (e.g., 'USD')"
+            }
+          },
+          "description": "Represents a monetary amount with its currency"
+        },
+        "ManualOrderIndicator": {
+          "type": "string",
+          "enum": [
+            "MANUAL_ORDER_INDICATOR_MANUAL",
+            "MANUAL_ORDER_INDICATOR_AUTOMATIC"
+          ],
+          "description": "Indicates whether the order was placed manually by a user or automatically by a trading system"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_user_positions",
+    "description": "Get user's trading positions across all markets or filtered by specific market",
+    "method": "GET",
+    "path": "/v1/portfolio/positions",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "market": {
+              "type": "string",
+              "description": "Filter positions by a specific market slug. When provided, returns only the position for that market. Example: `will-team-a-win`"
+            },
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Maximum number of positions to return per page. Use with `cursor` for pagination. Default: `100`. Example: `50`"
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Pagination cursor from a previous response's `nextCursor` field. Use to fetch the next page of results. Omit for the first request"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_activities",
+    "description": "Get activities for a user including trades, position resolutions, and account balance changes",
+    "method": "GET",
+    "path": "/v1/portfolio/activities",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Maximum number of activities to return per page. Use with `cursor` for pagination. Default: `100`. Example: `50`"
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Pagination cursor from a previous response's `nextCursor` field. Use to fetch the next page of results. Omit for the first request"
+            },
+            "marketSlug": {
+              "type": "string",
+              "description": "Filter activities by a specific market slug. Returns only activities (trades, resolutions) related to that market. Example: `will-team-a-win`"
+            },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "ACTIVITY_TYPE_TRADE",
+                  "ACTIVITY_TYPE_POSITION_RESOLUTION",
+                  "ACTIVITY_TYPE_ACCOUNT_DEPOSIT",
+                  "ACTIVITY_TYPE_ACCOUNT_ADVANCED_DEPOSIT",
+                  "ACTIVITY_TYPE_ACCOUNT_WITHDRAWAL",
+                  "ACTIVITY_TYPE_REFERRAL_BONUS",
+                  "ACTIVITY_TYPE_TRANSFER",
+                  "ACTIVITY_TYPE_TAKER_FEE_REBATE",
+                  "ACTIVITY_TYPE_LIQUIDITY_PROGRAM"
+                ]
+              },
+              "description": "Filter by activity types. When specified, only returns activities of the selected types. TRADE (order executions), POSITION_RESOLUTION (market settlements), ACCOUNT_DEPOSIT/WITHDRAWAL (fund transfers)"
+            },
+            "sortOrder": {
+              "type": "string",
+              "enum": [
+                "SORT_ORDER_DESCENDING",
+                "SORT_ORDER_ASCENDING"
+              ],
+              "description": "Sort order for activities by timestamp. DESCENDING returns newest first (default), ASCENDING returns oldest first"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_account_balances",
+    "description": "Get user's current account balances including buying power, asset values, and pending transactions",
+    "method": "GET",
+    "path": "/v1/account/balances",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_price_history",
+    "description": "Returns book-derived Yes and No display prices for one market. Use the market slug as `symbol`.\n\nSupported fixed profiles:\n- `INTERVAL_1H` with `fidelity=1`: approximately one-minute points for the last hour\n- `INTERVAL_6H` with `fidelity=1`: approximately one-minute points for the last six hours\n- `INTERVAL_1D` with `fidelity=5`: five-minute points for the last day\n- `INTERVAL_1W` with `fidelity=180`: three-hour points for the last week\n- `INTERVAL_1M` with `fidelity=180`: three-hour points for the last 30 days\n- `INTERVAL_ALL` with `fidelity=180`: three-hour points for newer markets and daily points for longer histories\n- `INTERVAL_LIVE` with `fidelity=1`: from 15 minutes before the event starts through now\n\nFor a custom range, provide both Unix timestamps and use `fidelity=1`. Custom ranges are intended for short windows of up to 24 hours and return stored observations, which may be irregular or more frequent than once per minute.\n\n`longPrice` is the Yes display price, normally derived from the best ask. `shortPrice` is the No display price, normally derived from one minus the best bid. They can sum to more than 1 because they preserve the bid-ask spread; these are not individual trades.\n\nThe endpoint supports one market per request. Cache identical responses for at least 30 seconds, stagger refreshes across markets, and observe the [20 requests/second/IP public limit](/api-reference/rate-limits). For live updates after loading history, use the [Markets WebSocket](/api-reference/websocket/markets).",
+    "method": "GET",
+    "path": "/v1/price-history",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Market slug."
+            },
+            "fixedInterval": {
+              "type": "string",
+              "enum": [
+                "INTERVAL_ALL",
+                "INTERVAL_1M",
+                "INTERVAL_1W",
+                "INTERVAL_1D",
+                "INTERVAL_6H",
+                "INTERVAL_1H",
+                "INTERVAL_LIVE"
+              ],
+              "description": "Fixed history window. Do not combine with timestamp parameters."
+            },
+            "timestamp.startTimestamp": {
+              "type": "integer",
+              "format": "int64",
+              "description": "Custom range start in Unix seconds. Requires timestamp.endTimestamp and cannot be combined with fixedInterval."
+            },
+            "timestamp.endTimestamp": {
+              "type": "integer",
+              "format": "int64",
+              "description": "Custom range end in Unix seconds. Requires timestamp.startTimestamp and cannot be combined with fixedInterval."
+            },
+            "fidelity": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "description": "Fidelity in minutes. Use the documented value for the selected fixed interval, or 1 for a timestamp range."
+            }
+          },
+          "required": [
+            "symbol",
+            "fidelity"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "name": "get_rfqs",
+    "description": "Returns RFQs matching the query filters.",
+    "method": "GET",
+    "path": "/v1/rfqs",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100
+            },
+            "cursor": {
+              "type": "string"
+            },
+            "rfqId": {
+              "type": "string"
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "RFQ_STATUS_OPEN",
+                "RFQ_STATUS_CLOSED"
+              ]
+            },
+            "userFilter": {
+              "type": "string",
+              "enum": [
+                "USER_FILTER_SELF"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "create_rfq",
+    "description": "LIVE ACCOUNT ACTION: Creates a combo RFQ using the authenticated Retail account. This operation may affect real funds or account state.",
+    "method": "POST",
+    "path": "/v1/rfqs",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/v1CreateRFQRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "$defs": {
+        "v1CreateRFQRequest": {
+          "type": "object",
+          "properties": {
+            "qtyDecimal": {
+              "type": "string"
+            },
+            "cashOrderQty": {
+              "type": "string"
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "restRemainder": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "symbol",
+            "restRemainder"
+          ],
+          "oneOf": [
+            {
+              "required": [
+                "qtyDecimal"
+              ]
+            },
+            {
+              "required": [
+                "cashOrderQty"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "get_quotes",
+    "description": "Returns quotes matching the query filters.",
+    "method": "GET",
+    "path": "/v1/rfqs/quotes",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100
+            },
+            "cursor": {
+              "type": "string"
+            },
+            "quoteId": {
+              "type": "string"
+            },
+            "rfqId": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "QUOTE_STATUS_ACTIVE",
+                "QUOTE_STATUS_CONFIRMED",
+                "QUOTE_STATUS_DELETED",
+                "QUOTE_STATUS_ACCEPTED",
+                "QUOTE_STATUS_EXECUTED"
+              ]
+            },
+            "userFilter": {
+              "type": "string",
+              "enum": [
+                "USER_FILTER_SELF"
+              ]
+            },
+            "rfqUserFilter": {
+              "type": "string",
+              "enum": [
+                "USER_FILTER_SELF"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "create_quote",
+    "description": "LIVE ACCOUNT ACTION: Creates a quote using the authenticated Retail account. Every successful call returns a new quoteId, including replacements. See [quote replacement](/api-reference/rfqs/overview#replace-a-quote). This operation may affect real funds or account state.",
+    "method": "POST",
+    "path": "/v1/rfqs/quotes",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/v1CreateQuoteRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "$defs": {
+        "v1CreateQuoteRequest": {
+          "type": "object",
+          "properties": {
+            "rfqId": {
+              "type": "string"
+            },
+            "buyPrice": {
+              "type": "string",
+              "description": "Price offered for a requester BUY order; the quote creator takes SELL."
+            },
+            "sellPrice": {
+              "type": "string",
+              "description": "Price offered for a requester SELL order; the quote creator takes BUY."
+            },
+            "restRemainder": {
+              "type": "boolean"
+            },
+            "postOnly": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "rfqId",
+            "buyPrice",
+            "sellPrice",
+            "restRemainder"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "get_rfq_trades",
+    "description": "Returns anonymous original fills where either order originated from an RFQ, newest first. Includes single instruments, combos, and later fills on resting orders. Repeat the same filters and limit with each cursor; an empty cursor ends the traversal. History is eventually visible. Requery overlapping time windows to find late arrivals and deduplicate by tradeId. Later corrections and busts do not amend these prints.",
+    "method": "GET",
+    "path": "/v1/rfqs/trades",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0,
+              "maximum": 100,
+              "default": 100,
+              "description": "Page size. Omitted or zero defaults to 100; otherwise between 1 and 100."
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Opaque continuation. Repeat the same participant, filters and limit."
+            },
+            "startTime": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Inclusive execution time. Defaults to the start of available history."
+            },
+            "endTime": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Exclusive execution time. Defaults to receipt time of the first request."
+            },
+            "symbol": {
+              "type": "string",
+              "description": "Exact, case-sensitive instrument symbol. Empty selects all symbols."
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_rfq_user_id",
+    "description": "Returns the public RFQ user ID for the authenticated participant.",
+    "method": "GET",
+    "path": "/v1/rfqs/user-id",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "delete_rfq",
+    "description": "LIVE ACCOUNT ACTION: Closes an open RFQ. This operation may affect real funds or account state.",
+    "method": "DELETE",
+    "path": "/v1/rfqs/{rfqId}",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "rfqId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "rfqId"
+      ]
+    }
+  },
+  {
+    "name": "delete_quote",
+    "description": "LIVE ACCOUNT ACTION: Deletes a quote so it can no longer be accepted. This operation may affect real funds or account state.",
+    "method": "DELETE",
+    "path": "/v1/rfqs/{rfqId}/quotes/{quoteId}",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "rfqId": {
+          "type": "string"
+        },
+        "quoteId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "rfqId",
+        "quoteId"
+      ]
+    }
+  },
+  {
+    "name": "accept_quote",
+    "description": "LIVE ACCOUNT ACTION: Accepts one side of a quote. This operation may affect real funds or account state.",
+    "method": "PUT",
+    "path": "/v1/rfqs/{rfqId}/quotes/{quoteId}/accept",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "rfqId": {
+          "type": "string"
+        },
+        "quoteId": {
+          "type": "string"
+        },
+        "body": {
+          "$ref": "#/$defs/RFQAPIAcceptQuoteBody"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "rfqId",
+        "quoteId",
+        "body"
+      ],
+      "$defs": {
+        "RFQAPIAcceptQuoteBody": {
+          "type": "object",
+          "properties": {
+            "acceptedSide": {
+              "$ref": "#/$defs/v1Side"
+            }
+          },
+          "required": [
+            "acceptedSide"
+          ]
+        },
+        "v1Side": {
+          "type": "string",
+          "enum": [
+            "SIDE_BUY",
+            "SIDE_SELL"
+          ],
+          "description": "Side indicates the side of an Order."
+        }
+      }
+    }
+  },
+  {
+    "name": "confirm_quote",
+    "description": "LIVE ACCOUNT ACTION: Confirms an accepted quote during last look. This operation may affect real funds or account state.",
+    "method": "PUT",
+    "path": "/v1/rfqs/{rfqId}/quotes/{quoteId}/confirm",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "rfqId": {
+          "type": "string"
+        },
+        "quoteId": {
+          "type": "string"
+        },
+        "body": {
+          "$ref": "#/$defs/RFQAPIConfirmQuoteBody"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "rfqId",
+        "quoteId",
+        "body"
+      ],
+      "$defs": {
+        "RFQAPIConfirmQuoteBody": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  {
+    "name": "search",
+    "description": "Search for a given query",
+    "method": "GET",
+    "path": "/v1/search",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "The query to search for"
+            },
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "The maximum number of results to return"
+            },
+            "seriesIds": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Filter by series IDs"
+            },
+            "marketType": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by market types"
+            },
+            "startTimeMin": {
+              "type": "string",
+              "description": "Minimum start time filter"
+            },
+            "startTimeMax": {
+              "type": "string",
+              "description": "Maximum start time filter"
+            },
+            "closedTimeMin": {
+              "type": "string",
+              "description": "Minimum closed time filter"
+            },
+            "closedTimeMax": {
+              "type": "string",
+              "description": "Maximum closed time filter"
+            },
+            "status": {
+              "type": "string",
+              "description": "Filter by status"
+            },
+            "page": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Page number for pagination"
+            },
+            "comboEnabledOnly": {
+              "type": "boolean",
+              "description": "Only return events with at least one combo-enabled market"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_series",
+    "description": "Retrieve all series",
+    "method": "GET",
+    "path": "/v1/series",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination limit"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination offset"
+            },
+            "orderBy": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Pagination order"
+            },
+            "orderDirection": {
+              "type": "string",
+              "description": "Pagination order direction"
+            },
+            "slug": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Series slug"
+            },
+            "active": {
+              "type": "boolean",
+              "description": "Whether series is active"
+            },
+            "recurrence": {
+              "type": "string",
+              "description": "Series recurrence pattern"
+            },
+            "params.limit": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "params.offset": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "params.orderBy": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "params.orderDirection": {
+              "type": "string"
+            },
+            "params.seriesFilters.slug": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "params.seriesFilters.categoriesIds": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "params.seriesFilters.categoriesLabels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "params.seriesFilters.query": {
+              "type": "string"
+            },
+            "params.seriesFilters.active": {
+              "type": "boolean"
+            },
+            "params.seriesFilters.recurrence": {
+              "type": "string"
+            },
+            "params.tagsFilters.includeTemplate": {
+              "type": "boolean"
+            },
+            "params.tagsFilters.query": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_series_by_id",
+    "description": "Retrieve a specific series by its ID",
+    "method": "GET",
+    "path": "/v1/series/id/{id}",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Series ID"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ]
+    }
+  },
+  {
+    "name": "get_all_leagues",
+    "description": "Retrieve leagues with pagination (max 50 per page)",
+    "method": "GET",
+    "path": "/v2/leagues",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination limit (max 50, default 50)"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination offset (default 0)"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_league_by_slug",
+    "description": "Retrieve a league by its slug",
+    "method": "GET",
+    "path": "/v2/leagues/{slug}",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "League slug"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "get_events_by_league_slug",
+    "description": "Retrieve events for a league by its slug (e.g., 'nfl', 'nba'). Resolves the league to its active series and returns events.",
+    "method": "GET",
+    "path": "/v2/leagues/{slug}/events",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "League slug (e.g., 'nfl', 'nba')"
+        },
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination limit"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination offset"
+            },
+            "excludeEventId": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Event IDs to exclude"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type: sport (default) or futures"
+            },
+            "section": {
+              "type": "string",
+              "description": "Section: general (default) or trending"
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "get_all_sports",
+    "description": "Retrieve all sports",
+    "method": "GET",
+    "path": "/v2/sports",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_sport_by_slug",
+    "description": "Retrieve a sport by its slug, with all leagues attached",
+    "method": "GET",
+    "path": "/v2/sports/{slug}",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Sport slug"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "get_events_by_sport_slug",
+    "description": "Retrieve events for a sport by its slug (e.g., 'football', 'basketball'). Fetches all leagues for the sport, collects their active series, and returns combined events.",
+    "method": "GET",
+    "path": "/v2/sports/{slug}/events",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Sport slug (e.g., 'football', 'basketball')"
+        },
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination limit"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination offset"
+            },
+            "excludeEventId": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Event IDs to exclude"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type: sport (default) or futures"
+            },
+            "section": {
+              "type": "string",
+              "description": "Section: general (default) or trending"
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "get_sports",
+    "description": "Fetch sports data",
+    "method": "GET",
+    "path": "/v1/sports",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_sports_players",
+    "description": "Fetch sports players, filterable by abbreviation, name, id, team, or provider reference",
+    "method": "GET",
+    "path": "/v1/sports/players",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Maximum number of players to return"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Number of players to skip for pagination"
+            },
+            "filters.abbreviation": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by abbreviation"
+            },
+            "filters.name": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by name"
+            },
+            "filters.id": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "int64"
+              },
+              "description": "Filter by player id"
+            },
+            "filters.teamId": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "int64"
+              },
+              "description": "Filter by team id"
+            },
+            "filters.provider": {
+              "type": "string",
+              "enum": [
+                "PROVIDER_SPORTSDATAIO",
+                "PROVIDER_SPORTRADAR",
+                "PROVIDER_OPTICODDS",
+                "PROVIDER_PANDASCORE",
+                "PROVIDER_INFRONT",
+                "PROVIDER_ENETPULSE",
+                "PROVIDER_UFC",
+                "PROVIDER_ODDSPAPI",
+                "PROVIDER_BETER",
+                "PROVIDER_CHAMPION_DATA"
+              ],
+              "description": "Filter by data provider; combine with provider_player_id"
+            },
+            "filters.providerPlayerId": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by provider player id; requires provider"
+            },
+            "filters.league": {
+              "type": "string",
+              "description": "Restrict to players on teams in this league; only honored with a provider filter"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_sports_teams",
+    "description": "Fetch sports teams data for enriching sports events",
+    "method": "GET",
+    "path": "/v1/sports/teams",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Maximum number of teams to return"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Number of teams to skip for pagination"
+            },
+            "orderBy": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Order by field"
+            },
+            "orderDirection": {
+              "type": "string",
+              "description": "Order direction"
+            },
+            "filters.league": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by league"
+            },
+            "filters.name": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by name"
+            },
+            "filters.abbreviation": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter by abbreviation"
+            },
+            "filters.id": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Team ids"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_sports_teams_for_provider",
+    "description": "Fetch sports teams data for a specific provider",
+    "method": "GET",
+    "path": "/v1/sports/teams/provider",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "teamIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Team IDs"
+            },
+            "provider": {
+              "type": "string",
+              "enum": [
+                "PROVIDER_SPORTSDATAIO",
+                "PROVIDER_SPORTRADAR",
+                "PROVIDER_OPTICODDS",
+                "PROVIDER_PANDASCORE",
+                "PROVIDER_INFRONT",
+                "PROVIDER_ENETPULSE",
+                "PROVIDER_UFC"
+              ],
+              "description": "The data provider"
+            },
+            "league": {
+              "type": "string",
+              "description": "The league of the teams"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_sports_events",
+    "description": "Retrieve events sections for a sport series (optional trending, optional live, and sport section). Same structure as home page.",
+    "method": "GET",
+    "path": "/v1/sports/{seriesId}/events",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "seriesId": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Series ID (path)"
+        },
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination limit"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination offset"
+            },
+            "excludeEventId": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "Event IDs to exclude"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type: sport (default) or futures"
+            },
+            "section": {
+              "type": "string",
+              "description": "Section: general (default) or trending"
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "seriesId"
+      ]
+    }
+  },
+  {
+    "name": "get_tags",
+    "description": "Get ranked tags with optional filtering",
+    "method": "GET",
+    "path": "/v2/tags",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination limit"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Pagination offset"
+            },
+            "orderBy": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Pagination order"
+            },
+            "orderDirection": {
+              "type": "string",
+              "description": "Pagination order direction"
+            },
+            "slug": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Tag slug to filter by"
+            },
+            "ids": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "description": "List of tag IDs to filter by"
+            },
+            "parentId": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Filter by parent tag ID. Ignored if parent_slug is provided."
+            },
+            "parentSlug": {
+              "type": "string",
+              "description": "Filter by parent tag slug. Takes priority over parent_id if both are provided."
+            },
+            "query": {
+              "type": "string",
+              "description": "Case-insensitive substring match on tag label."
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_tag_by_slug",
+    "description": "Get a tag by its slug",
+    "method": "GET",
+    "path": "/v2/tags/slug/{slug}",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Tag slug to retrieve"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "get_tag_by_id",
+    "description": "Get a tag by its ID",
+    "method": "GET",
+    "path": "/v2/tags/{id}",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Tag ID to retrieve"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ]
+    }
+  },
+  {
+    "name": "get_events_for_a_tag",
+    "description": "Get events filtered by tag slug, sorted by volume descending by default",
+    "method": "GET",
+    "path": "/v2/tags/{slug}/events",
+    "authenticated": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Tag slug"
+        },
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Maximum number of events to return"
+            },
+            "offset": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Number of events to skip for pagination"
+            },
+            "orderBy": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Fields to order results by (default: volume)"
+            },
+            "orderDirection": {
+              "type": "string",
+              "description": "Order direction (default: desc)"
+            },
+            "active": {
+              "type": "boolean",
+              "description": "Filter by active status (default: true)"
+            },
+            "closed": {
+              "type": "boolean",
+              "description": "Filter by closed status (default: false)"
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "slug"
+      ]
+    }
+  },
+  {
+    "name": "get_combos",
+    "description": "Returns the combo matching the exact symbol.",
+    "method": "GET",
+    "path": "/v1/combos",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "object",
+          "description": "Query parameters and pagination; use the exact field names shown.",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "name": "create_combo",
+    "description": "LIVE ACCOUNT ACTION: Creates or returns the combo instrument for the supplied legs. Each authenticated exchange participant may create up to 1,000 new combo instruments per week across all of its accounts. The quota resets Monday at 00:00 UTC. Returning an existing canonical combo does not consume the quota. This operation may affect real funds or account state.",
+    "method": "POST",
+    "path": "/v1/combos",
+    "authenticated": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/v1CreateComboRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "$defs": {
+        "v1CreateComboRequest": {
+          "type": "object",
+          "properties": {
+            "legs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/v1ComboLeg"
+              },
+              "minItems": 2,
+              "maxItems": 50
+            }
+          },
+          "required": [
+            "legs"
+          ]
+        },
+        "v1ComboLeg": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string"
+            },
+            "side": {
+              "$ref": "#/$defs/v1Side"
+            }
+          },
+          "required": [
+            "symbol",
+            "side"
+          ]
+        },
+        "v1Side": {
+          "type": "string",
+          "enum": [
+            "SIDE_BUY",
+            "SIDE_SELL"
+          ],
+          "description": "Side indicates the side of an Order."
+        }
+      }
+    }
+  }
+]
